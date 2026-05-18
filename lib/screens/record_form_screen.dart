@@ -58,6 +58,31 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
     }
   }
 
+  List<String> _obterOpcoesDosePermitidas() {
+    if (_selectedVacina == null) {
+      return ['1ª Dose', '2ª Dose', '3ª Dose', 'Dose Única', 'Reforço', 'Dose Anual'];
+    }
+
+    final nome = _selectedVacina!.nome.toLowerCase();
+    
+    // Vacinas de Dose Única
+    if (nome.contains('bcg') || 
+        nome.contains('hepatite a') || 
+        nome.contains('acwy') || 
+        nome.contains('23v') || 
+        nome.contains('pneumocócica 23v')) {
+      return ['Dose Única'];
+    }
+    
+    // Vacinas Anuais
+    if (nome.contains('gripe') || nome.contains('influenza')) {
+      return ['Dose Anual'];
+    }
+
+    // Padrão para multi-doses
+    return ['1ª Dose', '2ª Dose', '3ª Dose', 'Dose Única', 'Reforço', 'Dose Anual'];
+  }
+
   void _carregarDosesJaRegistradas() async {
     if (_selectedVacina == null) return;
     final db = context.read<AppDatabase>();
@@ -69,7 +94,8 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
     setState(() {
       _dosesJaRegistradas = results.map((r) => r.dose).toList();
       
-      final dosesDisponiveis = ['1ª Dose', '2ª Dose', '3ª Dose', 'Dose Única', 'Reforço', 'Dose Anual']
+      final opcoesPermitidas = _obterOpcoesDosePermitidas();
+      final dosesDisponiveis = opcoesPermitidas
           .where((d) => !_dosesJaRegistradas.contains(d) || (widget.agendaParaEditar != null && widget.agendaParaEditar!.agenda.dose == d))
           .toList();
           
@@ -79,6 +105,8 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
              (widget.agendaParaEditar == null || widget.agendaParaEditar!.agenda.dose != _selectedDose))) {
           _selectedDose = dosesDisponiveis.first;
         }
+      } else {
+        _selectedDose = null;
       }
     });
   }
@@ -87,6 +115,18 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
     if (!_formKey.currentState!.validate() || _selectedVacina == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor, selecione uma vacina.')),
+      );
+      return;
+    }
+
+    final opcoesPermitidas = _obterOpcoesDosePermitidas();
+    final dosesDisponiveis = opcoesPermitidas
+        .where((d) => !_dosesJaRegistradas.contains(d) || (widget.agendaParaEditar != null && widget.agendaParaEditar!.agenda.dose == d))
+        .toList();
+
+    if (dosesDisponiveis.isEmpty && widget.agendaParaEditar == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Você já registrou todas as doses possíveis para esta vacina.')),
       );
       return;
     }
@@ -170,6 +210,30 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (_selectedVacina != null && 
+                      _obterOpcoesDosePermitidas().where((d) => !_dosesJaRegistradas.contains(d) || (widget.agendaParaEditar != null && widget.agendaParaEditar!.agenda.dose == d)).isEmpty && 
+                      widget.agendaParaEditar == null)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.orange.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.orange.shade800),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Você já registrou todas as doses recomendadas para esta vacina!',
+                              style: TextStyle(color: Colors.orange.shade800, fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   DropdownButtonFormField<Vacina>(
                     value: _selectedVacina != null
                         ? vacinas.firstWhere((v) => v.id == _selectedVacina!.id, orElse: () => _selectedVacina!)
@@ -188,7 +252,7 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
                   DropdownButtonFormField<String>(
                     value: _selectedDose,
                     decoration: const InputDecoration(labelText: 'Dose', prefixIcon: Icon(Icons.numbers)),
-                    items: ['1ª Dose', '2ª Dose', '3ª Dose', 'Dose Única', 'Reforço', 'Dose Anual']
+                    items: _obterOpcoesDosePermitidas()
                         .where((d) => !_dosesJaRegistradas.contains(d) || (widget.agendaParaEditar != null && widget.agendaParaEditar!.agenda.dose == d))
                         .map((d) => DropdownMenuItem(value: d, child: Text(d)))
                         .toList(),
