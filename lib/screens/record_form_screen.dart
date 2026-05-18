@@ -148,6 +148,20 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
     });
   }
 
+  bool _isLastDoseSelected() {
+    if (_selectedDose == null) return false;
+    final opcoesPermitidas = _obterOpcoesDosePermitidas();
+    if (opcoesPermitidas.isEmpty) return false;
+    
+    final idx = opcoesPermitidas.indexOf(_selectedDose!);
+    if (idx == -1) return false;
+    
+    final subsequent = opcoesPermitidas.sublist(idx + 1);
+    final anyUnregisteredSubsequent = subsequent.any((dose) => !_dosesJaRegistradas.contains(dose));
+    
+    return !anyUnregisteredSubsequent;
+  }
+
   void _save() async {
     if (!_formKey.currentState!.validate() || _selectedVacina == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -157,9 +171,7 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
     }
 
     final opcoesPermitidas = _obterOpcoesDosePermitidas();
-    final isLastDose = _selectedDose != null && 
-        opcoesPermitidas.isNotEmpty && 
-        _selectedDose == opcoesPermitidas.last;
+    final isLastDose = _isLastDoseSelected();
     final proximaDoseVal = isLastDose ? null : _proximaDose;
 
     final dosesDisponiveis = opcoesPermitidas
@@ -301,8 +313,7 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
                     onChanged: (val) {
                       setState(() {
                         _selectedDose = val;
-                        final opcoes = _obterOpcoesDosePermitidas();
-                        if (val != null && opcoes.isNotEmpty && val == opcoes.last) {
+                        if (_isLastDoseSelected()) {
                           _proximaDose = null;
                         }
                       });
@@ -330,9 +341,7 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
                   ),
                   const SizedBox(height: 24),
                   _buildDatePickerTile('Data da Aplicação', _dataAplicacao, () => _selectDate(context, false)),
-                  if (!(_selectedVacina != null && 
-                      _obterOpcoesDosePermitidas().isNotEmpty && 
-                      _selectedDose == _obterOpcoesDosePermitidas().last)) ...[
+                  if (!(_selectedVacina != null && _isLastDoseSelected())) ...[
                     const SizedBox(height: 16),
                     _buildDatePickerTile(
                       'Previsão Próxima Dose', 
