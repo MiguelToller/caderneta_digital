@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../database/database.dart';
 import 'package:intl/intl.dart';
 import 'login_screen.dart';
+import 'notifications_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   final Usuario user;
@@ -35,6 +36,26 @@ class DashboardScreen extends StatelessWidget {
               SliverAppBar.large(
                 title: Text('Olá, ${currentUser.nome.split(' ')[0]}'),
                 actions: [
+                  StreamBuilder<List<AgendaWithVacina>>(
+                    stream: db.watchHistoricoDetalhado(user.id),
+                    builder: (context, snapshot) {
+                      final hasNotifications = snapshot.hasData && snapshot.data!.any((item) => item.agenda.proximaDose != null && item.agenda.proximaDose!.isBefore(DateTime.now()));
+                      return IconButton(
+                        tooltip: 'Avisos e Lembretes',
+                        icon: Badge(
+                          isLabelVisible: hasNotifications,
+                          backgroundColor: Colors.redAccent,
+                          child: const Icon(Icons.notifications_none_outlined),
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => NotificationsScreen(user: user)),
+                          );
+                        },
+                      );
+                    },
+                  ),
                   IconButton(
                     tooltip: 'Sair',
                     icon: const Icon(Icons.logout),

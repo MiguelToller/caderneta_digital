@@ -166,8 +166,19 @@ class AppDatabase extends _$AppDatabase {
     });
   }
 
-  Future<int> registrarDose(AgendasCompanion companion) {
-    return into(agendas).insert(companion);
+  Future<int> registrarDose(AgendasCompanion companion) async {
+    final userId = companion.usuarioId.value;
+    final vacId = companion.vacinaId.value;
+
+    return transaction(() async {
+      // 1. Limpar data de próxima dose/reforço de registros passados desta mesma vacina
+      await (update(agendas)
+            ..where((a) => a.usuarioId.equals(userId) & a.vacinaId.equals(vacId)))
+          .write(const AgendasCompanion(proximaDose: Value(null)));
+
+      // 2. Inserir o novo registro
+      return into(agendas).insert(companion);
+    });
   }
 
   Future<void> excluirDose(int id, int usuarioId) {

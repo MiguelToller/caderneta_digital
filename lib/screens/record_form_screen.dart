@@ -8,11 +8,13 @@ class RecordFormScreen extends StatefulWidget {
   final Usuario user;
   final AgendaWithVacina? agendaParaEditar;
   final Vacina? vacinaPreSelecionada;
+  final String? dosePreSelecionada;
   const RecordFormScreen({
     super.key,
     required this.user,
     this.agendaParaEditar,
     this.vacinaPreSelecionada,
+    this.dosePreSelecionada,
   });
 
   @override
@@ -60,12 +62,12 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
 
   List<String> _obterOpcoesDosePermitidas() {
     if (_selectedVacina == null) {
-      return ['1ª Dose', '2ª Dose', '3ª Dose', 'Dose Única', 'Reforço', 'Dose Anual'];
+      return ['1ª Dose', '2ª Dose', '3ª Dose', 'Reforço'];
     }
 
     final nome = _selectedVacina!.nome.toLowerCase();
     
-    // Vacinas de Dose Única
+    // 1. Vacinas de Dose Única
     if (nome.contains('bcg') || 
         nome.contains('hepatite a') || 
         nome.contains('acwy') || 
@@ -74,13 +76,46 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
       return ['Dose Única'];
     }
     
-    // Vacinas Anuais
+    // 2. Vacinas Anuais
     if (nome.contains('gripe') || nome.contains('influenza')) {
       return ['Dose Anual'];
     }
 
-    // Padrão para multi-doses
-    return ['1ª Dose', '2ª Dose', '3ª Dose', 'Dose Única', 'Reforço', 'Dose Anual'];
+    // 3. Vacinas de 2 doses (sem reforço por padrão)
+    if (nome.contains('rotav') || 
+        nome.contains('hpv') || 
+        nome.contains('varicela') ||
+        nome.contains('dengue')) {
+      return ['1ª Dose', '2ª Dose'];
+    }
+
+    // 4. Febre Amarela e Tríplice Viral
+    if (nome.contains('febre amarela')) {
+      return ['1ª Dose', 'Reforço'];
+    }
+    if (nome.contains('tríplice viral') || nome.contains('src')) {
+      return ['1ª Dose', '2ª Dose'];
+    }
+
+    // 5. Vacinas de 3 doses
+    if (nome.contains('hepatite b')) {
+      return ['1ª Dose', '2ª Dose', '3ª Dose'];
+    }
+
+    // 6. Vacinas de 3 doses com Reforço (Pentavalente, Poliomielite, DTP, dT, Pneumo 10V, Meningo C)
+    if (nome.contains('pentavalente') || 
+        nome.contains('poliomielite') || 
+        nome.contains('vip/vop') || 
+        nome.contains('pneumo') || 
+        nome.contains('meningo') || 
+        nome.contains('dtp') || 
+        nome.contains('dt ') || 
+        nome.contains('dupla adulto')) {
+      return ['1ª Dose', '2ª Dose', '3ª Dose', 'Reforço'];
+    }
+
+    // Padrão seguro para qualquer vacina customizada/avulsa
+    return ['1ª Dose', '2ª Dose', '3ª Dose', 'Reforço'];
   }
 
   void _carregarDosesJaRegistradas() async {
@@ -100,7 +135,9 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
           .toList();
           
       if (dosesDisponiveis.isNotEmpty) {
-        if (_selectedDose == null || 
+        if (widget.dosePreSelecionada != null && dosesDisponiveis.contains(widget.dosePreSelecionada)) {
+          _selectedDose = widget.dosePreSelecionada;
+        } else if (_selectedDose == null || 
             (!dosesDisponiveis.contains(_selectedDose) && 
              (widget.agendaParaEditar == null || widget.agendaParaEditar!.agenda.dose != _selectedDose))) {
           _selectedDose = dosesDisponiveis.first;
@@ -120,6 +157,11 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
     }
 
     final opcoesPermitidas = _obterOpcoesDosePermitidas();
+    final isLastDose = _selectedDose != null && 
+        opcoesPermitidas.isNotEmpty && 
+        _selectedDose == opcoesPermitidas.last;
+    final proximaDoseVal = isLastDose ? null : _proximaDose;
+
     final dosesDisponiveis = opcoesPermitidas
         .where((d) => !_dosesJaRegistradas.contains(d) || (widget.agendaParaEditar != null && widget.agendaParaEditar!.agenda.dose == d))
         .toList();
@@ -147,7 +189,7 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
         fabricante: drift.Value(_selectedFabricante),
         dataAplicacao: _dataAplicacao,
         local: drift.Value(local),
-        proximaDose: drift.Value(_proximaDose),
+        proximaDose: drift.Value(proximaDoseVal),
       );
 
       if (widget.agendaParaEditar == null) {
@@ -256,7 +298,15 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
                         .where((d) => !_dosesJaRegistradas.contains(d) || (widget.agendaParaEditar != null && widget.agendaParaEditar!.agenda.dose == d))
                         .map((d) => DropdownMenuItem(value: d, child: Text(d)))
                         .toList(),
-                    onChanged: (val) => setState(() => _selectedDose = val),
+                    onChanged: (val) {
+                      setState(() {
+                        _selectedDose = val;
+                        final opcoes = _obterOpcoesDosePermitidas();
+                        if (val != null && opcoes.isNotEmpty && val == opcoes.last) {
+                          _proximaDose = null;
+                        }
+                      });
+                    },
                     validator: (val) => val == null ? 'Obrigatório' : null,
                   ),
                   const SizedBox(height: 16),
@@ -280,13 +330,17 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
                   ),
                   const SizedBox(height: 24),
                   _buildDatePickerTile('Data da Aplicação', _dataAplicacao, () => _selectDate(context, false)),
-                  const SizedBox(height: 16),
-                  _buildDatePickerTile(
-                    'Previsão Próxima Dose', 
-                    _proximaDose, 
-                    () => _selectDate(context, true),
-                    isOptional: true,
-                  ),
+                  if (!(_selectedVacina != null && 
+                      _obterOpcoesDosePermitidas().isNotEmpty && 
+                      _selectedDose == _obterOpcoesDosePermitidas().last)) ...[
+                    const SizedBox(height: 16),
+                    _buildDatePickerTile(
+                      'Previsão Próxima Dose', 
+                      _proximaDose, 
+                      () => _selectDate(context, true),
+                      isOptional: true,
+                    ),
+                  ],
                   const SizedBox(height: 40),
                   ElevatedButton(
                     onPressed: _isLoading ? null : _save,
