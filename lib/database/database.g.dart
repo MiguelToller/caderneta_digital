@@ -646,6 +646,12 @@ class $AgendasTable extends Agendas with TableInfo<$AgendasTable, Agenda> {
   late final GeneratedColumn<String> lote = GeneratedColumn<String>(
       'lote', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _fabricanteMeta =
+      const VerificationMeta('fabricante');
+  @override
+  late final GeneratedColumn<String> fabricante = GeneratedColumn<String>(
+      'fabricante', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _dataAplicacaoMeta =
       const VerificationMeta('dataAplicacao');
   @override
@@ -664,8 +670,17 @@ class $AgendasTable extends Agendas with TableInfo<$AgendasTable, Agenda> {
       'proxima_dose', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, usuarioId, vacinaId, dose, lote, dataAplicacao, local, proximaDose];
+  List<GeneratedColumn> get $columns => [
+        id,
+        usuarioId,
+        vacinaId,
+        dose,
+        lote,
+        fabricante,
+        dataAplicacao,
+        local,
+        proximaDose
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -700,6 +715,12 @@ class $AgendasTable extends Agendas with TableInfo<$AgendasTable, Agenda> {
     if (data.containsKey('lote')) {
       context.handle(
           _loteMeta, lote.isAcceptableOrUnknown(data['lote']!, _loteMeta));
+    }
+    if (data.containsKey('fabricante')) {
+      context.handle(
+          _fabricanteMeta,
+          fabricante.isAcceptableOrUnknown(
+              data['fabricante']!, _fabricanteMeta));
     }
     if (data.containsKey('data_aplicacao')) {
       context.handle(
@@ -738,6 +759,8 @@ class $AgendasTable extends Agendas with TableInfo<$AgendasTable, Agenda> {
           .read(DriftSqlType.string, data['${effectivePrefix}dose'])!,
       lote: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}lote']),
+      fabricante: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}fabricante']),
       dataAplicacao: attachedDatabase.typeMapping.read(
           DriftSqlType.dateTime, data['${effectivePrefix}data_aplicacao'])!,
       local: attachedDatabase.typeMapping
@@ -759,6 +782,7 @@ class Agenda extends DataClass implements Insertable<Agenda> {
   final int vacinaId;
   final String dose;
   final String? lote;
+  final String? fabricante;
   final DateTime dataAplicacao;
   final String? local;
   final DateTime? proximaDose;
@@ -768,6 +792,7 @@ class Agenda extends DataClass implements Insertable<Agenda> {
       required this.vacinaId,
       required this.dose,
       this.lote,
+      this.fabricante,
       required this.dataAplicacao,
       this.local,
       this.proximaDose});
@@ -780,6 +805,9 @@ class Agenda extends DataClass implements Insertable<Agenda> {
     map['dose'] = Variable<String>(dose);
     if (!nullToAbsent || lote != null) {
       map['lote'] = Variable<String>(lote);
+    }
+    if (!nullToAbsent || fabricante != null) {
+      map['fabricante'] = Variable<String>(fabricante);
     }
     map['data_aplicacao'] = Variable<DateTime>(dataAplicacao);
     if (!nullToAbsent || local != null) {
@@ -798,6 +826,9 @@ class Agenda extends DataClass implements Insertable<Agenda> {
       vacinaId: Value(vacinaId),
       dose: Value(dose),
       lote: lote == null && nullToAbsent ? const Value.absent() : Value(lote),
+      fabricante: fabricante == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fabricante),
       dataAplicacao: Value(dataAplicacao),
       local:
           local == null && nullToAbsent ? const Value.absent() : Value(local),
@@ -816,6 +847,7 @@ class Agenda extends DataClass implements Insertable<Agenda> {
       vacinaId: serializer.fromJson<int>(json['vacinaId']),
       dose: serializer.fromJson<String>(json['dose']),
       lote: serializer.fromJson<String?>(json['lote']),
+      fabricante: serializer.fromJson<String?>(json['fabricante']),
       dataAplicacao: serializer.fromJson<DateTime>(json['dataAplicacao']),
       local: serializer.fromJson<String?>(json['local']),
       proximaDose: serializer.fromJson<DateTime?>(json['proximaDose']),
@@ -830,6 +862,7 @@ class Agenda extends DataClass implements Insertable<Agenda> {
       'vacinaId': serializer.toJson<int>(vacinaId),
       'dose': serializer.toJson<String>(dose),
       'lote': serializer.toJson<String?>(lote),
+      'fabricante': serializer.toJson<String?>(fabricante),
       'dataAplicacao': serializer.toJson<DateTime>(dataAplicacao),
       'local': serializer.toJson<String?>(local),
       'proximaDose': serializer.toJson<DateTime?>(proximaDose),
@@ -842,6 +875,7 @@ class Agenda extends DataClass implements Insertable<Agenda> {
           int? vacinaId,
           String? dose,
           Value<String?> lote = const Value.absent(),
+          Value<String?> fabricante = const Value.absent(),
           DateTime? dataAplicacao,
           Value<String?> local = const Value.absent(),
           Value<DateTime?> proximaDose = const Value.absent()}) =>
@@ -851,6 +885,7 @@ class Agenda extends DataClass implements Insertable<Agenda> {
         vacinaId: vacinaId ?? this.vacinaId,
         dose: dose ?? this.dose,
         lote: lote.present ? lote.value : this.lote,
+        fabricante: fabricante.present ? fabricante.value : this.fabricante,
         dataAplicacao: dataAplicacao ?? this.dataAplicacao,
         local: local.present ? local.value : this.local,
         proximaDose: proximaDose.present ? proximaDose.value : this.proximaDose,
@@ -862,6 +897,8 @@ class Agenda extends DataClass implements Insertable<Agenda> {
       vacinaId: data.vacinaId.present ? data.vacinaId.value : this.vacinaId,
       dose: data.dose.present ? data.dose.value : this.dose,
       lote: data.lote.present ? data.lote.value : this.lote,
+      fabricante:
+          data.fabricante.present ? data.fabricante.value : this.fabricante,
       dataAplicacao: data.dataAplicacao.present
           ? data.dataAplicacao.value
           : this.dataAplicacao,
@@ -879,6 +916,7 @@ class Agenda extends DataClass implements Insertable<Agenda> {
           ..write('vacinaId: $vacinaId, ')
           ..write('dose: $dose, ')
           ..write('lote: $lote, ')
+          ..write('fabricante: $fabricante, ')
           ..write('dataAplicacao: $dataAplicacao, ')
           ..write('local: $local, ')
           ..write('proximaDose: $proximaDose')
@@ -887,8 +925,8 @@ class Agenda extends DataClass implements Insertable<Agenda> {
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, usuarioId, vacinaId, dose, lote, dataAplicacao, local, proximaDose);
+  int get hashCode => Object.hash(id, usuarioId, vacinaId, dose, lote,
+      fabricante, dataAplicacao, local, proximaDose);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -898,6 +936,7 @@ class Agenda extends DataClass implements Insertable<Agenda> {
           other.vacinaId == this.vacinaId &&
           other.dose == this.dose &&
           other.lote == this.lote &&
+          other.fabricante == this.fabricante &&
           other.dataAplicacao == this.dataAplicacao &&
           other.local == this.local &&
           other.proximaDose == this.proximaDose);
@@ -909,6 +948,7 @@ class AgendasCompanion extends UpdateCompanion<Agenda> {
   final Value<int> vacinaId;
   final Value<String> dose;
   final Value<String?> lote;
+  final Value<String?> fabricante;
   final Value<DateTime> dataAplicacao;
   final Value<String?> local;
   final Value<DateTime?> proximaDose;
@@ -918,6 +958,7 @@ class AgendasCompanion extends UpdateCompanion<Agenda> {
     this.vacinaId = const Value.absent(),
     this.dose = const Value.absent(),
     this.lote = const Value.absent(),
+    this.fabricante = const Value.absent(),
     this.dataAplicacao = const Value.absent(),
     this.local = const Value.absent(),
     this.proximaDose = const Value.absent(),
@@ -928,6 +969,7 @@ class AgendasCompanion extends UpdateCompanion<Agenda> {
     required int vacinaId,
     required String dose,
     this.lote = const Value.absent(),
+    this.fabricante = const Value.absent(),
     required DateTime dataAplicacao,
     this.local = const Value.absent(),
     this.proximaDose = const Value.absent(),
@@ -941,6 +983,7 @@ class AgendasCompanion extends UpdateCompanion<Agenda> {
     Expression<int>? vacinaId,
     Expression<String>? dose,
     Expression<String>? lote,
+    Expression<String>? fabricante,
     Expression<DateTime>? dataAplicacao,
     Expression<String>? local,
     Expression<DateTime>? proximaDose,
@@ -951,6 +994,7 @@ class AgendasCompanion extends UpdateCompanion<Agenda> {
       if (vacinaId != null) 'vacina_id': vacinaId,
       if (dose != null) 'dose': dose,
       if (lote != null) 'lote': lote,
+      if (fabricante != null) 'fabricante': fabricante,
       if (dataAplicacao != null) 'data_aplicacao': dataAplicacao,
       if (local != null) 'local': local,
       if (proximaDose != null) 'proxima_dose': proximaDose,
@@ -963,6 +1007,7 @@ class AgendasCompanion extends UpdateCompanion<Agenda> {
       Value<int>? vacinaId,
       Value<String>? dose,
       Value<String?>? lote,
+      Value<String?>? fabricante,
       Value<DateTime>? dataAplicacao,
       Value<String?>? local,
       Value<DateTime?>? proximaDose}) {
@@ -972,6 +1017,7 @@ class AgendasCompanion extends UpdateCompanion<Agenda> {
       vacinaId: vacinaId ?? this.vacinaId,
       dose: dose ?? this.dose,
       lote: lote ?? this.lote,
+      fabricante: fabricante ?? this.fabricante,
       dataAplicacao: dataAplicacao ?? this.dataAplicacao,
       local: local ?? this.local,
       proximaDose: proximaDose ?? this.proximaDose,
@@ -996,6 +1042,9 @@ class AgendasCompanion extends UpdateCompanion<Agenda> {
     if (lote.present) {
       map['lote'] = Variable<String>(lote.value);
     }
+    if (fabricante.present) {
+      map['fabricante'] = Variable<String>(fabricante.value);
+    }
     if (dataAplicacao.present) {
       map['data_aplicacao'] = Variable<DateTime>(dataAplicacao.value);
     }
@@ -1016,6 +1065,7 @@ class AgendasCompanion extends UpdateCompanion<Agenda> {
           ..write('vacinaId: $vacinaId, ')
           ..write('dose: $dose, ')
           ..write('lote: $lote, ')
+          ..write('fabricante: $fabricante, ')
           ..write('dataAplicacao: $dataAplicacao, ')
           ..write('local: $local, ')
           ..write('proximaDose: $proximaDose')
@@ -1906,6 +1956,7 @@ typedef $$AgendasTableCreateCompanionBuilder = AgendasCompanion Function({
   required int vacinaId,
   required String dose,
   Value<String?> lote,
+  Value<String?> fabricante,
   required DateTime dataAplicacao,
   Value<String?> local,
   Value<DateTime?> proximaDose,
@@ -1916,6 +1967,7 @@ typedef $$AgendasTableUpdateCompanionBuilder = AgendasCompanion Function({
   Value<int> vacinaId,
   Value<String> dose,
   Value<String?> lote,
+  Value<String?> fabricante,
   Value<DateTime> dataAplicacao,
   Value<String?> local,
   Value<DateTime?> proximaDose,
@@ -1971,6 +2023,9 @@ class $$AgendasTableFilterComposer
 
   ColumnFilters<String> get lote => $composableBuilder(
       column: $table.lote, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get fabricante => $composableBuilder(
+      column: $table.fabricante, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get dataAplicacao => $composableBuilder(
       column: $table.dataAplicacao, builder: (column) => ColumnFilters(column));
@@ -2040,6 +2095,9 @@ class $$AgendasTableOrderingComposer
   ColumnOrderings<String> get lote => $composableBuilder(
       column: $table.lote, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get fabricante => $composableBuilder(
+      column: $table.fabricante, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get dataAplicacao => $composableBuilder(
       column: $table.dataAplicacao,
       builder: (column) => ColumnOrderings(column));
@@ -2108,6 +2166,9 @@ class $$AgendasTableAnnotationComposer
 
   GeneratedColumn<String> get lote =>
       $composableBuilder(column: $table.lote, builder: (column) => column);
+
+  GeneratedColumn<String> get fabricante => $composableBuilder(
+      column: $table.fabricante, builder: (column) => column);
 
   GeneratedColumn<DateTime> get dataAplicacao => $composableBuilder(
       column: $table.dataAplicacao, builder: (column) => column);
@@ -2187,6 +2248,7 @@ class $$AgendasTableTableManager extends RootTableManager<
             Value<int> vacinaId = const Value.absent(),
             Value<String> dose = const Value.absent(),
             Value<String?> lote = const Value.absent(),
+            Value<String?> fabricante = const Value.absent(),
             Value<DateTime> dataAplicacao = const Value.absent(),
             Value<String?> local = const Value.absent(),
             Value<DateTime?> proximaDose = const Value.absent(),
@@ -2197,6 +2259,7 @@ class $$AgendasTableTableManager extends RootTableManager<
             vacinaId: vacinaId,
             dose: dose,
             lote: lote,
+            fabricante: fabricante,
             dataAplicacao: dataAplicacao,
             local: local,
             proximaDose: proximaDose,
@@ -2207,6 +2270,7 @@ class $$AgendasTableTableManager extends RootTableManager<
             required int vacinaId,
             required String dose,
             Value<String?> lote = const Value.absent(),
+            Value<String?> fabricante = const Value.absent(),
             required DateTime dataAplicacao,
             Value<String?> local = const Value.absent(),
             Value<DateTime?> proximaDose = const Value.absent(),
@@ -2217,6 +2281,7 @@ class $$AgendasTableTableManager extends RootTableManager<
             vacinaId: vacinaId,
             dose: dose,
             lote: lote,
+            fabricante: fabricante,
             dataAplicacao: dataAplicacao,
             local: local,
             proximaDose: proximaDose,

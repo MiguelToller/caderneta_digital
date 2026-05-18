@@ -28,6 +28,7 @@ class Agendas extends Table {
   IntColumn get vacinaId => integer().references(Vacinas, #id)();
   TextColumn get dose => text()();
   TextColumn get lote => text().nullable()();
+  TextColumn get fabricante => text().nullable()();
   DateTimeColumn get dataAplicacao => dateTime()();
   TextColumn get local => text().nullable()();
   DateTimeColumn get proximaDose => dateTime().nullable()();
@@ -60,7 +61,7 @@ class AppDatabase extends _$AppDatabase {
   ));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -70,17 +71,52 @@ class AppDatabase extends _$AppDatabase {
         
         await batch((batch) {
           batch.insertAll(vacinas, [
-            VacinasCompanion.insert(nome: 'BCG', categoria: 'Rotina', descricao: 'Tuberculose'),
-            VacinasCompanion.insert(nome: 'Hepatite B', categoria: 'Rotina', descricao: 'Hepatite B'),
-            VacinasCompanion.insert(nome: 'Pentavalente', categoria: 'Rotina', descricao: 'Difteria, Tétano, etc'),
-            VacinasCompanion.insert(nome: 'Febre Amarela', categoria: 'Viagem', descricao: 'Febre Amarela'),
-            VacinasCompanion.insert(nome: 'Gripe', categoria: 'Campanha', descricao: 'Influenza'),
+            VacinasCompanion.insert(nome: 'BCG', categoria: 'Rotina', descricao: 'Previne as formas graves de tuberculose (Dose única ao nascer)'),
+            VacinasCompanion.insert(nome: 'Hepatite B', categoria: 'Rotina', descricao: 'Previne a hepatite B (Ao nascer)'),
+            VacinasCompanion.insert(nome: 'Pentavalente', categoria: 'Rotina', descricao: 'Previne difteria, tétano, coqueluche, hepatite B e meningite por Hib (3 doses aos 2, 4 e 6 meses)'),
+            VacinasCompanion.insert(nome: 'VIP/VOP (Poliomielite)', categoria: 'Rotina', descricao: 'Previne a paralisia infantil (3 doses aos 2, 4 e 6 meses + reforços)'),
+            VacinasCompanion.insert(nome: 'Pneumocócica 10V', categoria: 'Rotina', descricao: 'Previne pneumonia, otite e meningite por pneumococo (2 doses aos 2 e 4 meses + reforço)'),
+            VacinasCompanion.insert(nome: 'Rotavírus', categoria: 'Rotina', descricao: 'Previne diarreia por rotavírus (2 doses aos 2 e 4 meses)'),
+            VacinasCompanion.insert(nome: 'Meningocócica C', categoria: 'Rotina', descricao: 'Previne a meningite C (2 doses aos 3 e 5 meses + reforço)'),
+            VacinasCompanion.insert(nome: 'Febre Amarela', categoria: 'Rotina', descricao: 'Previne a febre amarela (Aos 9 meses + reforço aos 4 anos)'),
+            VacinasCompanion.insert(nome: 'Tríplice Viral (SRC)', categoria: 'Rotina', descricao: 'Previne sarampo, caxumba e rubéola (2 doses aos 12 e 15 meses)'),
+            VacinasCompanion.insert(nome: 'Hepatite A', categoria: 'Rotina', descricao: 'Previne a hepatite A (1 dose aos 15 meses)'),
+            VacinasCompanion.insert(nome: 'DTP', categoria: 'Rotina', descricao: 'Previne difteria, tétano e coqueluche (Reforços aos 15 meses e 4 anos)'),
+            VacinasCompanion.insert(nome: 'Varicela', categoria: 'Rotina', descricao: 'Previne a catapora (Aos 15 meses e 4 anos)'),
+            VacinasCompanion.insert(nome: 'HPV Quadrivalente', categoria: 'Rotina', descricao: 'Previne cânceres do colo do útero e verrugas genitais (2 doses de 9 a 14 anos)'),
+            VacinasCompanion.insert(nome: 'Meningocócica ACWY', categoria: 'Rotina', descricao: 'Previne meningites ACWY (1 dose de 11 a 12 anos)'),
+            VacinasCompanion.insert(nome: 'dT (Dupla Adulto)', categoria: 'Rotina', descricao: 'Previne difteria e tétano (Reforço a cada 10 anos)'),
+            VacinasCompanion.insert(nome: 'Gripe (Influenza)', categoria: 'Campanha', descricao: 'Previne a gripe (Dose anual)'),
+            VacinasCompanion.insert(nome: 'Covid-19', categoria: 'Campanha', descricao: 'Previne a Covid-19'),
+            VacinasCompanion.insert(nome: 'Dengue', categoria: 'Campanha', descricao: 'Previne a dengue'),
           ]);
         });
       },
       onUpgrade: (Migrator m, int from, int to) async {
         if (from < 2) {
           await m.createTable(alergias);
+        }
+        if (from < 3) {
+          await m.addColumn(agendas, agendas.fabricante);
+          
+          // Adiciona as novas vacinas oficiais do SUS para quem já tem a base criada
+          await batch((batch) {
+            batch.insertAll(vacinas, [
+              VacinasCompanion.insert(nome: 'VIP/VOP (Poliomielite)', categoria: 'Rotina', descricao: 'Previne a paralisia infantil (3 doses aos 2, 4 e 6 meses + reforços)'),
+              VacinasCompanion.insert(nome: 'Pneumocócica 10V', categoria: 'Rotina', descricao: 'Previne pneumonia, otite e meningite por pneumococo (2 doses aos 2 e 4 meses + reforço)'),
+              VacinasCompanion.insert(nome: 'Rotavírus', categoria: 'Rotina', descricao: 'Previne diarreia por rotavírus (2 doses aos 2 e 4 meses)'),
+              VacinasCompanion.insert(nome: 'Meningocócica C', categoria: 'Rotina', descricao: 'Previne a meningite C (2 doses aos 3 e 5 meses + reforço)'),
+              VacinasCompanion.insert(nome: 'Tríplice Viral (SRC)', categoria: 'Rotina', descricao: 'Previne sarampo, caxumba e rubéola (2 doses aos 12 e 15 meses)'),
+              VacinasCompanion.insert(nome: 'Hepatite A', categoria: 'Rotina', descricao: 'Previne a hepatite A (1 dose aos 15 meses)'),
+              VacinasCompanion.insert(nome: 'DTP', categoria: 'Rotina', descricao: 'Previne difteria, tétano e coqueluche (Reforços aos 15 meses e 4 anos)'),
+              VacinasCompanion.insert(nome: 'Varicela', categoria: 'Rotina', descricao: 'Previne a catapora (Aos 15 meses e 4 anos)'),
+              VacinasCompanion.insert(nome: 'HPV Quadrivalente', categoria: 'Rotina', descricao: 'Previne cânceres do colo do útero e verrugas genitais (2 doses de 9 a 14 anos)'),
+              VacinasCompanion.insert(nome: 'Meningocócica ACWY', categoria: 'Rotina', descricao: 'Previne meningites ACWY (1 dose de 11 a 12 anos)'),
+              VacinasCompanion.insert(nome: 'dT (Dupla Adulto)', categoria: 'Rotina', descricao: 'Previne difteria e tétano (Reforço a cada 10 anos)'),
+              VacinasCompanion.insert(nome: 'Covid-19', categoria: 'Campanha', descricao: 'Previne a Covid-19'),
+              VacinasCompanion.insert(nome: 'Dengue', categoria: 'Campanha', descricao: 'Previne a dengue'),
+            ]);
+          });
         }
       },
     );

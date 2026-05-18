@@ -243,11 +243,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 _buildInfoItem(Icons.calendar_today, 'Data', DateFormat('dd/MM/yyyy').format(item.agenda.dataAplicacao)),
               ],
             ),
-            const SizedBox(height: 12),
             Row(
               children: [
                 _buildInfoItem(Icons.qr_code, 'Lote', item.agenda.lote ?? 'N/A'),
                 const SizedBox(width: 24),
+                _buildInfoItem(Icons.business, 'Fabricante', item.agenda.fabricante ?? 'N/A'),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
                 _buildInfoItem(Icons.location_on, 'Local', item.agenda.local ?? 'N/A'),
               ],
             ),

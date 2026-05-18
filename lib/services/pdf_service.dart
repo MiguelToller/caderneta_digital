@@ -133,7 +133,7 @@ class PdfService {
     }
 
     return pw.TableHelper.fromTextArray(
-      headers: ['Vacina', 'Categoria', 'Dose', 'Data', 'Lote', 'Local'],
+      headers: ['Vacina', 'Dose', 'Data', 'Lote', 'Fabricante', 'Local'],
       headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, color: PdfColors.white, fontSize: 10),
       headerDecoration: const pw.BoxDecoration(color: PdfColors.blueGrey800),
       cellStyle: const pw.TextStyle(fontSize: 10),
@@ -143,16 +143,16 @@ class PdfService {
         1: pw.Alignment.center,
         2: pw.Alignment.center,
         3: pw.Alignment.center,
-        4: pw.Alignment.center,
+        4: pw.Alignment.centerLeft,
         5: pw.Alignment.centerLeft,
       },
       data: historico.map((item) {
         return [
           item.vacina.nome,
-          item.vacina.categoria,
           item.agenda.dose,
           format.format(item.agenda.dataAplicacao),
           item.agenda.lote ?? '-',
+          item.agenda.fabricante ?? '-',
           item.agenda.local ?? '-',
         ];
       }).toList(),

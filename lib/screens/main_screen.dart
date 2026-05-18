@@ -4,6 +4,7 @@ import 'dashboard_screen.dart';
 import 'history_screen.dart';
 import 'record_form_screen.dart';
 import 'profile_screen.dart';
+import 'calendar_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final Usuario user;
@@ -24,6 +25,7 @@ class _MainScreenState extends State<MainScreen> {
     _screens = [
       DashboardScreen(user: widget.user),
       HistoryScreen(user: widget.user),
+      CalendarScreen(user: widget.user),
       ProfileScreen(user: widget.user),
     ];
   }
@@ -38,10 +40,11 @@ class _MainScreenState extends State<MainScreen> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.dashboard_outlined), selectedIcon: Icon(Icons.dashboard), label: 'Início'),
           NavigationDestination(icon: Icon(Icons.history), label: 'Carteira'),
+          NavigationDestination(icon: Icon(Icons.calendar_today_outlined), selectedIcon: Icon(Icons.calendar_today), label: 'Calendário'),
           NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Perfil'),
         ],
       ),
-      floatingActionButton: _currentIndex != 2 ? FloatingActionButton.extended(
+      floatingActionButton: _currentIndex != 3 ? FloatingActionButton.extended(
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => RecordFormScreen(user: widget.user)),
