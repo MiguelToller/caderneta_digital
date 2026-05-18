@@ -208,10 +208,13 @@ class NotificationsScreen extends StatelessWidget {
       return ['1ª Dose', '2ª Dose', '3ª Dose'];
     }
 
-    // 6. Vacinas de 3 doses com Reforço (Pentavalente, Poliomielite, DTP, dT, Pneumo 10V, Meningo C)
+    // 6. VIP/VOP (Poliomielite) - 5 doses no total (3 doses + 2 reforços)
+    if (nome.contains('poliomielite') || nome.contains('vip/vop')) {
+      return ['1ª Dose', '2ª Dose', '3ª Dose', '1º Reforço', '2º Reforço'];
+    }
+
+    // 7. Vacinas de 3 doses com Reforço (Pentavalente, DTP, dT, Pneumo 10V, Meningo C)
     if (nome.contains('pentavalente') || 
-        nome.contains('poliomielite') || 
-        nome.contains('vip/vop') || 
         nome.contains('pneumo') || 
         nome.contains('meningo') || 
         nome.contains('dtp') || 
