@@ -1,7 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../database/database.dart';
+
+class _AvatarOption {
+  final String emoji;
+  final List<Color> gradientColors;
+  const _AvatarOption({required this.emoji, required this.gradientColors});
+}
+
+const List<_AvatarOption> _avatarOptions = [
+  _AvatarOption(emoji: '💉', gradientColors: [Colors.purple, Colors.indigo]),
+  _AvatarOption(emoji: '🩺', gradientColors: [Colors.blue, Colors.teal]),
+  _AvatarOption(emoji: '🦸', gradientColors: [Colors.orange, Colors.red]),
+  _AvatarOption(emoji: '🧬', gradientColors: [Colors.indigo, Colors.deepPurple]),
+  _AvatarOption(emoji: '🛡️', gradientColors: [Colors.teal, Colors.green]),
+  _AvatarOption(emoji: '🌡️', gradientColors: [Colors.yellow, Colors.orange]),
+  _AvatarOption(emoji: '🧠', gradientColors: [Colors.pink, Colors.redAccent]),
+  _AvatarOption(emoji: '👤', gradientColors: [Colors.blueGrey, Colors.grey]),
+];
 
 class ProfileScreen extends StatefulWidget {
   final Usuario user;
@@ -19,6 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _isEditing = false;
   bool _isLoading = false;
+  int _avatarIndex = 0;
 
   final List<String> _tiposSanguineos = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
@@ -29,6 +48,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _emailController = TextEditingController(text: widget.user.email);
     _selectedTipoSanguineo = widget.user.tipoSanguineo;
     _dataNascimento = widget.user.dataNascimento;
+    _carregarAvatar();
+  }
+
+  void _carregarAvatar() async {
+    final prefs = await SharedPreferences.getInstance();
+    final index = prefs.getInt('usuario_avatar_${widget.user.id}') ?? 0;
+    if (mounted) {
+      setState(() {
+        _avatarIndex = index;
+      });
+    }
+  }
+
+  void _salvarAvatar(int index) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('usuario_avatar_${widget.user.id}', index);
+    if (mounted) {
+      setState(() {
+        _avatarIndex = index;
+      });
+    }
   }
 
   void _save() async {
@@ -100,10 +140,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                const CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.blueAccent,
-                  child: Icon(Icons.person, size: 50, color: Colors.white),
+                Builder(
+                  builder: (context) {
+                    final avatar = _avatarOptions[_avatarIndex >= 0 && _avatarIndex < _avatarOptions.length ? _avatarIndex : 0];
+                    return GestureDetector(
+                      onTap: _mostrarSeletorAvatar,
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: avatar.gradientColors,
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: avatar.gradientColors.first.withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                avatar.emoji,
+                                style: const TextStyle(fontSize: 44),
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: const Icon(
+                              Icons.edit,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
                 ),
                 const SizedBox(height: 32),
                 _buildInfoField('Nome Completo', _nomeController, Icons.person),
@@ -321,6 +407,87 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _mostrarSeletorAvatar() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Escolha seu Avatar',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Selecione um ícone de perfil personalizado',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                ),
+                itemCount: _avatarOptions.length,
+                itemBuilder: (context, index) {
+                  final option = _avatarOptions[index];
+                  final isSelected = index == _avatarIndex;
+                  return GestureDetector(
+                    onTap: () {
+                      _salvarAvatar(index);
+                      Navigator.pop(ctx);
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: option.gradientColors,
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        border: isSelected
+                            ? Border.all(color: Theme.of(context).colorScheme.primary, width: 4)
+                            : null,
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: option.gradientColors.first.withOpacity(0.4),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                )
+                              ]
+                            : null,
+                      ),
+                      child: Center(
+                        child: Text(
+                          option.emoji,
+                          style: const TextStyle(fontSize: 24),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -103,6 +103,40 @@ class DashboardScreen extends StatelessWidget {
               SliverAppBar.large(
                 title: Text('Olá, ${currentUser.nome.split(' ')[0]}'),
                 actions: [
+                  FutureBuilder<SharedPreferences>(
+                    future: SharedPreferences.getInstance(),
+                    builder: (context, prefsSnapshot) {
+                      final prefs = prefsSnapshot.data;
+                      final avatarIndex = prefs?.getInt('usuario_avatar_${user.id}') ?? 0;
+                      final avatar = _avatarOptions[avatarIndex >= 0 && avatarIndex < _avatarOptions.length ? avatarIndex : 0];
+                      return Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: avatar.gradientColors,
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: avatar.gradientColors.first.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            avatar.emoji,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                   StreamBuilder<List<AgendaWithVacina>>(
                     stream: db.watchHistoricoDetalhado(user.id),
                     builder: (context, snapshot) {
@@ -677,3 +711,20 @@ class _RecomendacaoVacina {
   final int dosesNecessarias;
   const _RecomendacaoVacina({required this.nome, required this.categoria, required this.dosesNecessarias});
 }
+
+class _AvatarOption {
+  final String emoji;
+  final List<Color> gradientColors;
+  const _AvatarOption({required this.emoji, required this.gradientColors});
+}
+
+const List<_AvatarOption> _avatarOptions = [
+  _AvatarOption(emoji: '💉', gradientColors: [Colors.purple, Colors.indigo]),
+  _AvatarOption(emoji: '🩺', gradientColors: [Colors.blue, Colors.teal]),
+  _AvatarOption(emoji: '🦸', gradientColors: [Colors.orange, Colors.red]),
+  _AvatarOption(emoji: '🧬', gradientColors: [Colors.indigo, Colors.deepPurple]),
+  _AvatarOption(emoji: '🛡️', gradientColors: [Colors.teal, Colors.green]),
+  _AvatarOption(emoji: '🌡️', gradientColors: [Colors.yellow, Colors.orange]),
+  _AvatarOption(emoji: '🧠', gradientColors: [Colors.pink, Colors.redAccent]),
+  _AvatarOption(emoji: '👤', gradientColors: [Colors.blueGrey, Colors.grey]),
+];
