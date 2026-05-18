@@ -44,7 +44,7 @@ class _MainScreenState extends State<MainScreen> {
           NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Perfil'),
         ],
       ),
-      floatingActionButton: _currentIndex != 3 ? FloatingActionButton.extended(
+      floatingActionButton: (_currentIndex == 0 || _currentIndex == 1) ? FloatingActionButton.extended(
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => RecordFormScreen(user: widget.user)),
