@@ -33,6 +33,7 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
 
   bool _isLoading = false;
   late Future<List<Vacina>> _vacinasFuture;
+  List<String> _dosesJaRegistradas = [];
 
   @override
   void initState() {
@@ -50,9 +51,36 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
       _localController.text = a.local ?? '';
       _dataAplicacao = a.dataAplicacao;
       _proximaDose = a.proximaDose;
+      _carregarDosesJaRegistradas();
     } else if (widget.vacinaPreSelecionada != null) {
       _selectedVacina = widget.vacinaPreSelecionada;
+      _carregarDosesJaRegistradas();
     }
+  }
+
+  void _carregarDosesJaRegistradas() async {
+    if (_selectedVacina == null) return;
+    final db = context.read<AppDatabase>();
+    final results = await (db.select(db.agendas)
+      ..where((a) => a.usuarioId.equals(widget.user.id) & a.vacinaId.equals(_selectedVacina!.id)))
+      .get();
+    
+    if (!mounted) return;
+    setState(() {
+      _dosesJaRegistradas = results.map((r) => r.dose).toList();
+      
+      final dosesDisponiveis = ['1ª Dose', '2ª Dose', '3ª Dose', 'Dose Única', 'Reforço', 'Dose Anual']
+          .where((d) => !_dosesJaRegistradas.contains(d) || (widget.agendaParaEditar != null && widget.agendaParaEditar!.agenda.dose == d))
+          .toList();
+          
+      if (dosesDisponiveis.isNotEmpty) {
+        if (_selectedDose == null || 
+            (!dosesDisponiveis.contains(_selectedDose) && 
+             (widget.agendaParaEditar == null || widget.agendaParaEditar!.agenda.dose != _selectedDose))) {
+          _selectedDose = dosesDisponiveis.first;
+        }
+      }
+    });
   }
 
   void _save() async {
@@ -148,7 +176,12 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
                         : null,
                     decoration: const InputDecoration(labelText: 'Selecione a Vacina', prefixIcon: Icon(Icons.medication)),
                     items: vacinas.map((v) => DropdownMenuItem(value: v, child: Text(v.nome))).toList(),
-                    onChanged: (v) => setState(() => _selectedVacina = v),
+                    onChanged: (v) {
+                      setState(() {
+                        _selectedVacina = v;
+                      });
+                      _carregarDosesJaRegistradas();
+                    },
                     validator: (v) => v == null ? 'Obrigatório' : null,
                   ),
                   const SizedBox(height: 16),
@@ -156,6 +189,7 @@ class _RecordFormScreenState extends State<RecordFormScreen> {
                     value: _selectedDose,
                     decoration: const InputDecoration(labelText: 'Dose', prefixIcon: Icon(Icons.numbers)),
                     items: ['1ª Dose', '2ª Dose', '3ª Dose', 'Dose Única', 'Reforço', 'Dose Anual']
+                        .where((d) => !_dosesJaRegistradas.contains(d) || (widget.agendaParaEditar != null && widget.agendaParaEditar!.agenda.dose == d))
                         .map((d) => DropdownMenuItem(value: d, child: Text(d)))
                         .toList(),
                     onChanged: (val) => setState(() => _selectedDose = val),

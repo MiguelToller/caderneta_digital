@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../database/database.dart';
 import 'record_form_screen.dart';
 
@@ -8,12 +9,14 @@ class RecomendacaoVacina {
   final String descricao;
   final String doseRecomendada;
   final String idadeRecomendada;
+  final int dosesNecessarias;
 
   RecomendacaoVacina({
     required this.nome,
     required this.descricao,
     required this.doseRecomendada,
     required this.idadeRecomendada,
+    required this.dosesNecessarias,
   });
 }
 
@@ -37,9 +40,9 @@ class CalendarScreen extends StatelessWidget {
     return 'Idoso (60 anos ou mais)';
   }
 
-  bool _verificarSeTomou(RecomendacaoVacina rec, List<AgendaWithVacina> historico) {
+  List<AgendaWithVacina> _obterDosesTomadas(RecomendacaoVacina rec, List<AgendaWithVacina> historico) {
     final recNome = rec.nome.toLowerCase();
-    return historico.any((item) {
+    return historico.where((item) {
       final vacNome = item.vacina.nome.toLowerCase();
       if (vacNome == recNome) return true;
       if (vacNome.contains('bcg') && recNome.contains('bcg')) return true;
@@ -63,7 +66,7 @@ class CalendarScreen extends StatelessWidget {
       if (vacNome.contains('covid') && recNome.contains('covid')) return true;
       if (vacNome.contains('dengue') && recNome.contains('dengue')) return true;
       return false;
-    });
+    }).toList();
   }
 
   @override
@@ -73,37 +76,37 @@ class CalendarScreen extends StatelessWidget {
 
     final Map<String, List<RecomendacaoVacina>> calendarioSus = {
       'Criança (0 a 10 anos)': [
-        RecomendacaoVacina(nome: 'BCG', descricao: 'Tuberculose (formas graves)', doseRecomendada: 'Dose única ao nascer', idadeRecomendada: 'Ao nascer'),
-        RecomendacaoVacina(nome: 'Hepatite B', descricao: 'Hepatite B', doseRecomendada: 'Dose única ao nascer', idadeRecomendada: 'Ao nascer'),
-        RecomendacaoVacina(nome: 'Pentavalente', descricao: 'Difteria, Tétano, Coqueluche, HepB, Hib', doseRecomendada: '3 doses', idadeRecomendada: '2, 4 e 6 meses'),
-        RecomendacaoVacina(nome: 'VIP/VOP (Poliomielite)', descricao: 'Paralisia infantil', doseRecomendada: '3 doses VIP + 2 reforços VOP', idadeRecomendada: '2, 4, 6 meses (VIP) e 15 meses, 4 anos (VOP)'),
-        RecomendacaoVacina(nome: 'Pneumocócica 10V', descricao: 'Pneumonia, otite, meningite', doseRecomendada: '2 doses + 1 reforço', idadeRecomendada: '2, 4 meses e reforço aos 12 meses'),
-        RecomendacaoVacina(nome: 'Rotavírus', descricao: 'Diarreia por rotavírus', doseRecomendada: '2 doses', idadeRecomendada: '2 e 4 meses'),
-        RecomendacaoVacina(nome: 'Meningocócica C', descricao: 'Meningite C', doseRecomendada: '2 doses + 1 reforço', idadeRecomendada: '3, 5 meses e reforço aos 12 meses'),
-        RecomendacaoVacina(nome: 'Febre Amarela', descricao: 'Febre amarela', doseRecomendada: '1 dose + 1 reforço', idadeRecomendada: '9 meses e reforço aos 4 anos'),
-        RecomendacaoVacina(nome: 'Tríplice Viral (SRC)', descricao: 'Sarampo, Caxumba, Rubéola', doseRecomendada: '2 doses', idadeRecomendada: '12 e 15 meses'),
-        RecomendacaoVacina(nome: 'Hepatite A', descricao: 'Hepatite A', doseRecomendada: '1 dose', idadeRecomendada: '15 meses'),
-        RecomendacaoVacina(nome: 'DTP', descricao: 'Difteria, Tétano, Coqueluche (reforço)', doseRecomendada: '2 reforços', idadeRecomendada: '15 meses e 4 anos'),
-        RecomendacaoVacina(nome: 'Varicela', descricao: 'Catapora', doseRecomendada: '1 dose', idadeRecomendada: '15 meses'),
+        RecomendacaoVacina(nome: 'BCG', descricao: 'Tuberculose (formas graves)', doseRecomendada: 'Dose única ao nascer', idadeRecomendada: 'Ao nascer', dosesNecessarias: 1),
+        RecomendacaoVacina(nome: 'Hepatite B', descricao: 'Hepatite B', doseRecomendada: 'Dose única ao nascer', idadeRecomendada: 'Ao nascer', dosesNecessarias: 1),
+        RecomendacaoVacina(nome: 'Pentavalente', descricao: 'Difteria, Tétano, Coqueluche, HepB, Hib', doseRecomendada: '3 doses', idadeRecomendada: '2, 4 e 6 meses', dosesNecessarias: 3),
+        RecomendacaoVacina(nome: 'VIP/VOP (Poliomielite)', descricao: 'Paralisia infantil', doseRecomendada: '3 doses VIP + 2 reforços VOP', idadeRecomendada: '2, 4, 6 meses (VIP) e 15 meses, 4 anos (VOP)', dosesNecessarias: 5),
+        RecomendacaoVacina(nome: 'Pneumocócica 10V', descricao: 'Pneumonia, otite, meningite', doseRecomendada: '2 doses + 1 reforço', idadeRecomendada: '2, 4 meses e reforço aos 12 meses', dosesNecessarias: 3),
+        RecomendacaoVacina(nome: 'Rotavírus', descricao: 'Diarreia por rotavírus', doseRecomendada: '2 doses', idadeRecomendada: '2 e 4 meses', dosesNecessarias: 2),
+        RecomendacaoVacina(nome: 'Meningocócica C', descricao: 'Meningite C', doseRecomendada: '2 doses + 1 reforço', idadeRecomendada: '3, 5 meses e reforço aos 12 meses', dosesNecessarias: 3),
+        RecomendacaoVacina(nome: 'Febre Amarela', descricao: 'Febre amarela', doseRecomendada: '1 dose + 1 reforço', idadeRecomendada: '9 meses e reforço aos 4 anos', dosesNecessarias: 2),
+        RecomendacaoVacina(nome: 'Tríplice Viral (SRC)', descricao: 'Sarampo, Caxumba, Rubéola', doseRecomendada: '2 doses', idadeRecomendada: '12 e 15 meses', dosesNecessarias: 2),
+        RecomendacaoVacina(nome: 'Hepatite A', descricao: 'Hepatite A', doseRecomendada: '1 dose', idadeRecomendada: '15 meses', dosesNecessarias: 1),
+        RecomendacaoVacina(nome: 'DTP', descricao: 'Difteria, Tétano, Coqueluche (reforço)', doseRecomendada: '2 reforços', idadeRecomendada: '15 meses e 4 anos', dosesNecessarias: 2),
+        RecomendacaoVacina(nome: 'Varicela', descricao: 'Catapora', doseRecomendada: '1 dose', idadeRecomendada: '15 meses', dosesNecessarias: 1),
       ],
       'Adolescente (11 a 19 anos)': [
-        RecomendacaoVacina(nome: 'HPV Quadrivalente', descricao: 'Prevenção de cânceres e verrugas genitais', doseRecomendada: '2 doses', idadeRecomendada: '9 a 14 anos'),
-        RecomendacaoVacina(nome: 'Meningocócica ACWY', descricao: 'Meningites ACWY', doseRecomendada: 'Dose única', idadeRecomendada: '11 a 12 anos'),
-        RecomendacaoVacina(nome: 'Hepatite B', descricao: 'Hepatite B (iniciar ou completar esquema)', doseRecomendada: '3 doses', idadeRecomendada: '11 a 19 anos'),
-        RecomendacaoVacina(nome: 'Tríplice Viral (SRC)', descricao: 'Sarampo, Caxumba, Rubéola (se não vacinado)', doseRecomendada: '2 doses', idadeRecomendada: '11 a 19 anos'),
-        RecomendacaoVacina(nome: 'dT (Dupla Adulto)', descricao: 'Difteria e Tétano (reforço)', doseRecomendada: 'Reforço a cada 10 anos', idadeRecomendada: '11 a 19 anos'),
+        RecomendacaoVacina(nome: 'HPV Quadrivalente', descricao: 'Prevenção de cânceres e verrugas genitais', doseRecomendada: '2 doses', idadeRecomendada: '9 a 14 anos', dosesNecessarias: 2),
+        RecomendacaoVacina(nome: 'Meningocócica ACWY', descricao: 'Meningites ACWY', doseRecomendada: 'Dose única', idadeRecomendada: '11 a 12 anos', dosesNecessarias: 1),
+        RecomendacaoVacina(nome: 'Hepatite B', descricao: 'Hepatite B (iniciar ou completar esquema)', doseRecomendada: '3 doses', idadeRecomendada: '11 a 19 anos', dosesNecessarias: 3),
+        RecomendacaoVacina(nome: 'Tríplice Viral (SRC)', descricao: 'Sarampo, Caxumba, Rubéola (se não vacinado)', doseRecomendada: '2 doses', idadeRecomendada: '11 a 19 anos', dosesNecessarias: 2),
+        RecomendacaoVacina(nome: 'dT (Dupla Adulto)', descricao: 'Difteria e Tétano (reforço)', doseRecomendada: 'Reforço a cada 10 anos', idadeRecomendada: '11 a 19 anos', dosesNecessarias: 1),
       ],
       'Adulto (20 a 59 anos)': [
-        RecomendacaoVacina(nome: 'Hepatite B', descricao: 'Hepatite B (iniciar ou completar esquema)', doseRecomendada: '3 doses', idadeRecomendada: '20 a 59 anos'),
-        RecomendacaoVacina(nome: 'Tríplice Viral (SRC)', descricao: 'Sarampo, Caxumba, Rubéola (se não vacinado)', doseRecomendada: '1 ou 2 doses', idadeRecomendada: 'Até 49 anos (2 doses até 29, 1 dose de 30-49)'),
-        RecomendacaoVacina(nome: 'dT (Dupla Adulto)', descricao: 'Difteria e Tétano', doseRecomendada: 'Reforço a cada 10 anos', idadeRecomendada: 'A partir de 20 anos'),
-        RecomendacaoVacina(nome: 'Febre Amarela', descricao: 'Febre amarela (se nunca tomou)', doseRecomendada: 'Dose única', idadeRecomendada: 'Até 59 anos'),
+        RecomendacaoVacina(nome: 'Hepatite B', descricao: 'Hepatite B (iniciar ou completar esquema)', doseRecomendada: '3 doses', idadeRecomendada: '20 a 59 anos', dosesNecessarias: 3),
+        RecomendacaoVacina(nome: 'Tríplice Viral (SRC)', descricao: 'Sarampo, Caxumba, Rubéola (se não vacinado)', doseRecomendada: '1 ou 2 doses', idadeRecomendada: 'Até 49 anos (2 doses até 29, 1 dose de 30-49)', dosesNecessarias: 2),
+        RecomendacaoVacina(nome: 'dT (Dupla Adulto)', descricao: 'Difteria e Tétano', doseRecomendada: 'Reforço a cada 10 anos', idadeRecomendada: 'A partir de 20 anos', dosesNecessarias: 1),
+        RecomendacaoVacina(nome: 'Febre Amarela', descricao: 'Febre amarela (se nunca tomou)', doseRecomendada: 'Dose única', idadeRecomendada: 'Até 59 anos', dosesNecessarias: 1),
       ],
       'Idoso (60 anos ou mais)': [
-        RecomendacaoVacina(nome: 'Hepatite B', descricao: 'Hepatite B (iniciar ou completar esquema)', doseRecomendada: '3 doses', idadeRecomendada: 'A partir de 60 anos'),
-        RecomendacaoVacina(nome: 'dT (Dupla Adulto)', descricao: 'Difteria e Tétano', doseRecomendada: 'Reforço a cada 10 anos', idadeRecomendada: 'A partir de 60 anos'),
-        RecomendacaoVacina(nome: 'Gripe (Influenza)', descricao: 'Gripe comum', doseRecomendada: 'Dose anual', idadeRecomendada: 'Anual'),
-        RecomendacaoVacina(nome: 'Pneumocócica 23V', descricao: 'Prevenção de pneumonia grave (acamados/institucionalizados)', doseRecomendada: 'Dose única', idadeRecomendada: '60 anos ou mais'),
+        RecomendacaoVacina(nome: 'Hepatite B', descricao: 'Hepatite B (iniciar ou completar esquema)', doseRecomendada: '3 doses', idadeRecomendada: 'A partir de 60 anos', dosesNecessarias: 3),
+        RecomendacaoVacina(nome: 'dT (Dupla Adulto)', descricao: 'Difteria e Tétano', doseRecomendada: 'Reforço a cada 10 anos', idadeRecomendada: 'A partir de 60 anos', dosesNecessarias: 1),
+        RecomendacaoVacina(nome: 'Gripe (Influenza)', descricao: 'Gripe comum', doseRecomendada: 'Dose anual', idadeRecomendada: 'Anual', dosesNecessarias: 1),
+        RecomendacaoVacina(nome: 'Pneumocócica 23V', descricao: 'Prevenção de pneumonia grave (acamados/institucionalizados)', doseRecomendada: 'Dose única', idadeRecomendada: '60 anos ou mais', dosesNecessarias: 1),
       ],
     };
 
@@ -195,7 +198,27 @@ class CalendarScreen extends StatelessWidget {
                                     ],
                                   ),
                                   children: recomendacoes.map((rec) {
-                                    final tomou = _verificarSeTomou(rec, historico);
+                                    final dosesTomadas = _obterDosesTomadas(rec, historico);
+                                    final totalTomadas = dosesTomadas.length;
+                                    
+                                    final bool completa = totalTomadas >= rec.dosesNecessarias;
+                                    final bool incompleta = totalTomadas > 0 && totalTomadas < rec.dosesNecessarias;
+
+
+                                    DateTime? proximaAgendada;
+                                    bool atrasada = false;
+
+                                    if (incompleta) {
+                                      final dates = dosesTomadas
+                                          .where((d) => d.agenda.proximaDose != null)
+                                          .map((d) => d.agenda.proximaDose!)
+                                          .toList();
+                                      if (dates.isNotEmpty) {
+                                        dates.sort((a, b) => b.compareTo(a));
+                                        proximaAgendada = dates.first;
+                                        atrasada = proximaAgendada.isBefore(DateTime.now());
+                                      }
+                                    }
 
                                     return ListTile(
                                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -212,25 +235,77 @@ class CalendarScreen extends StatelessWidget {
                                             style: TextStyle(color: Colors.grey[700], fontSize: 13),
                                           ),
                                           const SizedBox(height: 4),
-                                          Row(
-                                            children: [
-                                              Icon(Icons.info_outline, size: 14, color: theme.colorScheme.secondary),
-                                              const SizedBox(width: 4),
-                                              Expanded(
-                                                child: Text(
-                                                  'Recomendado: ${rec.idadeRecomendada} (${rec.doseRecomendada})',
-                                                  style: TextStyle(
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w500,
-                                                    color: theme.colorScheme.secondary,
-                                                  ),
+                                          Text(
+                                            'Recomendado: ${rec.idadeRecomendada} (${rec.doseRecomendada})',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w500,
+                                              color: theme.colorScheme.secondary,
+                                            ),
+                                          ),
+                                          if (incompleta) ...[
+                                            const SizedBox(height: 6),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                              decoration: BoxDecoration(
+                                                color: Colors.orange.shade50,
+                                                borderRadius: BorderRadius.circular(8),
+                                                border: Border.all(color: Colors.orange.shade300),
+                                              ),
+                                              child: Text(
+                                                'Esquema Incompleto ($totalTomadas/${rec.dosesNecessarias} doses)',
+                                                style: TextStyle(
+                                                  color: Colors.orange.shade800,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 10,
                                                 ),
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                            const SizedBox(height: 6),
+                                            if (proximaAgendada != null)
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                    atrasada ? Icons.warning_amber_rounded : Icons.alarm,
+                                                    size: 14,
+                                                    color: atrasada ? Colors.red[800] : Colors.blue[800],
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Expanded(
+                                                    child: Text(
+                                                      atrasada
+                                                          ? 'ATRASADA! Reforço programado para ${DateFormat('dd/MM/yyyy').format(proximaAgendada)}'
+                                                          : 'Reforço agendado para: ${DateFormat('dd/MM/yyyy').format(proximaAgendada)}',
+                                                      style: TextStyle(
+                                                        fontSize: 11,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: atrasada ? Colors.red[800] : Colors.blue[800],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              )
+                                            else
+                                              Row(
+                                                children: [
+                                                  Icon(Icons.warning_amber_rounded, size: 14, color: Colors.orange[800]),
+                                                  const SizedBox(width: 4),
+                                                  Expanded(
+                                                    child: Text(
+                                                      'Esquema incompleto! Defina uma data de reforço.',
+                                                      style: TextStyle(
+                                                        fontSize: 11,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: Colors.orange[800],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              )
+                                          ],
                                         ],
                                       ),
-                                      trailing: tomou
+                                      trailing: completa
                                           ? Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                               decoration: BoxDecoration(
@@ -244,7 +319,7 @@ class CalendarScreen extends StatelessWidget {
                                                   Icon(Icons.check_circle, size: 14, color: Colors.green.shade700),
                                                   const SizedBox(width: 4),
                                                   Text(
-                                                    'Aplicada',
+                                                    'Completo ($totalTomadas/${rec.dosesNecessarias})',
                                                     style: TextStyle(
                                                       color: Colors.green.shade700,
                                                       fontWeight: FontWeight.bold,
@@ -260,7 +335,10 @@ class CalendarScreen extends StatelessWidget {
                                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                                               ),
-                                              child: const Text('Registrar', style: TextStyle(fontSize: 11)),
+                                              child: Text(
+                                                incompleta ? '+ ${totalTomadas + 1}ª Dose' : 'Registrar',
+                                                style: const TextStyle(fontSize: 11),
+                                              ),
                                             ),
                                     );
                                   }).toList(),
@@ -349,7 +427,6 @@ class CalendarScreen extends StatelessWidget {
   }
 
   void _registrarVacinaPendente(BuildContext context, RecomendacaoVacina rec, AppDatabase db) async {
-    // Buscar a vacina no catálogo por nome aproximado
     final vacinas = await db.todasVacinas;
     Vacina? vacinaCorrespondente;
     try {
@@ -358,7 +435,6 @@ class CalendarScreen extends StatelessWidget {
                rec.nome.toLowerCase().contains(v.nome.toLowerCase()),
       );
     } catch (_) {
-      // Se não encontrar por contêm, pega a vacina pelo primeiro termo (ex: "VIP/VOP (Poliomielite)" vs "VIP")
       final primeiroTermo = rec.nome.split(' ')[0].toLowerCase();
       try {
         vacinaCorrespondente = vacinas.firstWhere(
@@ -366,7 +442,7 @@ class CalendarScreen extends StatelessWidget {
                  primeiroTermo.contains(v.nome.toLowerCase()),
         );
       } catch (_) {
-        // Sem correspondência direta
+        // Sem correspondência
       }
     }
 
