@@ -121,3 +121,7 @@ Registros de restrições alérgicas ativas cadastradas no perfil.
    ```bash
    flutter run
    ```
+   ou
+   ```
+   flutter run -d web-server --web-port=8080
+   ```
